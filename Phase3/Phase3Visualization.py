@@ -6,9 +6,19 @@ import seaborn as sns
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 
+import matplotlib
+# Force macOS interactive backend
+matplotlib.use('MacOSX')
+import matplotlib.pyplot as plt
+
 
 BASE_DIR    = os.path.dirname(os.path.abspath(__file__)) if '__file__' in locals() else os.getcwd()
+
 TRIMMED_DIR = os.path.join(BASE_DIR, "Phase3_TrimmedData")
+GRAPH_DIR   = os.path.join(BASE_DIR, "Phase3_Graphs")
+
+os.makedirs(TRIMMED_DIR, exist_ok=True)
+os.makedirs(GRAPH_DIR, exist_ok=True)
 
 PATH_WEATHER_SEL = os.path.join(TRIMMED_DIR, "combined_weather_selected.csv")
 PATH_POWER_SEL   = os.path.join(TRIMMED_DIR, "southernedison_selected.csv")
@@ -24,19 +34,19 @@ df_power_sel['Date']   = pd.to_datetime(df_power_sel['Date'])
 df_merged = pd.merge(df_weather_sel, df_power_sel, on='Date', how='inner').dropna()
 
 
-# PLOT 1: Feature Correlation Heatmap using Trimmed Data
-
+# Plot 1: Feature Correlation Heatmap using Trimmed Data
 plt.figure(figsize=(8, 6))
 corr_trimmed = df_merged.select_dtypes(include=np.number).corr()
 sns.heatmap(corr_trimmed, annot=True, cmap='coolwarm', fmt=".2f", vmin=-1, vmax=1)
 plt.title("Trimmed Data: Weather Features vs. Peak Demand Correlation")
 plt.tight_layout()
-plt.savefig(os.path.join(TRIMMED_DIR, "trimmed_correlation_heatmap.png"))
+
+# Save heatmap into Phase3_Graphs
+plt.savefig(os.path.join(GRAPH_DIR, "trimmed_correlation_heatmap.png"))
 plt.close()
 
 
-# PLOT 2: Trendline Comparison (Linear vs. Polynomial Regression)
-
+# Plot 2: Trendline Comparison (Linear vs. Polynomial Regression)
 X = df_merged[['Max_Temp_C']].values
 y = df_merged['Peak_Demand_MW'].values
 
@@ -67,7 +77,9 @@ plt.ylabel('Peak Energy Demand (MW)')
 plt.legend(loc='upper left')
 plt.grid(True, linestyle='--', alpha=0.5)
 plt.tight_layout()
-plt.savefig(os.path.join(TRIMMED_DIR, "trimmed_regression_comparison.png"))
+
+# Save regression comparison plot into Phase3_Graphs
+plt.savefig(os.path.join(GRAPH_DIR, "trimmed_regression_comparison.png"))
 plt.close()
 
-print("Successfully generated and saved both plots using the trimmed data in Phase3_TrimmedData!")
+print("Generated both plots and saved them to the Phase3_Graphs folder.")

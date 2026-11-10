@@ -10,13 +10,16 @@ matplotlib.use('MacOSX')
 import matplotlib.pyplot as plt
 
 
-# 1. FILE PATHS & DATE RANGE CONFIGURATION (2014 - 2024)
+# FILE PATHS & DATE RANGE CONFIGURATION (2014 - 2024)
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__)) if '__file__' in locals() else os.getcwd()
 
-# Point directly to the folders nested inside the same 'Phase2' directory as your script
-DATA_DIR   = os.path.join(BASE_DIR, "Phase2_RawData")
-EXPORT_DIR = os.path.join(BASE_DIR, "Phase2_CleanData")
-os.makedirs(EXPORT_DIR, exist_ok=True)
+# Point directly to the folders nested inside your 'Phase2' directory
+DATA_DIR    = os.path.join(BASE_DIR, "Phase2_RawData")
+CLEAN_DIR   = os.path.join(BASE_DIR, "Phase2_CleanData")
+GRAPH_DIR   = os.path.join(BASE_DIR, "Phase2_Graphs")
+
+os.makedirs(CLEAN_DIR, exist_ok=True)
+os.makedirs(GRAPH_DIR, exist_ok=True)
 
 PATH_COMBINED  = os.path.join(DATA_DIR, "inland_empire_combined_10yr.csv")
 PATH_RIVERSIDE = os.path.join(DATA_DIR, "riverside_noaa_extracted.csv")
@@ -26,7 +29,7 @@ PATH_EDISON    = os.path.join(DATA_DIR, "southernedisondataorganized.csv")
 START_DATE = "2014-01-01"
 END_DATE   = "2024-12-31"
 
-# 2. LOAD DATASETS & STANDARDIZE TEMPORAL BOUNDARIES
+# LOAD DATASETS & STANDARDIZE TEMPORAL BOUNDARIES
 df_combined  = pd.read_csv(PATH_COMBINED)
 df_riverside = pd.read_csv(PATH_RIVERSIDE)
 df_sb        = pd.read_csv(PATH_SB)
@@ -47,7 +50,7 @@ df_edison    = df_edison[(df_edison['Date'] >= START_DATE) & (df_edison['Date'] 
 if 'Max_Temp_C' in df_combined.columns:
     df_combined['Max_Temp_F'] = (df_combined['Max_Temp_C'] * 1.8) + 32
 
-# 3. DISPLAY RAW SAMPLES & DESCRIPTIVE STATISTICAL SUMMARIES
+# DISPLAY RAW SAMPLES & DESCRIPTIVE STATISTICAL SUMMARIES
 print("--- Raw Combined Weather Sample ---")
 print(df_combined.head(3))
 
@@ -72,7 +75,7 @@ print(df_sb.select_dtypes(include=np.number).describe().T[['mean', 'min', 'max',
 print("\n--- Southern Edison Load Descriptive Statistics ---")
 print(df_edison.select_dtypes(include=np.number).describe().T[['mean', 'min', 'max', 'std']])
 
-# 4. UNTRANSFORMED RAW SIGNALS
+# UNTRANSFORMED RAW SIGNALS
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
 
 # Filter 2023 evaluation window
@@ -98,11 +101,11 @@ ax2.legend(loc='upper left')
 ax2.grid(True, linestyle='--', alpha=0.5)
 
 plt.tight_layout()
-# Save the first raw plot into Phase2_CleanData
-plt.savefig(os.path.join(EXPORT_DIR, "raw_signals_2023.png"))
+# Save raw plot into Phase2_Graphs
+plt.savefig(os.path.join(GRAPH_DIR, "raw_signals_2023.png"))
 plt.close()
 
-# 5. MISSING VALUES & DATA INTEGRITY
+# MISSING VALUES & DATA INTEGRITY
 print("\n--- Missing Value Audit ---")
 print("Combined Weather Missing Count:\n", df_combined.isnull().sum())
 print("\nRiverside NOAA Missing Count:\n", df_riverside.isnull().sum())
@@ -116,7 +119,7 @@ for df in [df_combined, df_riverside, df_sb, df_edison]:
     for col in num_cols:
         df[col] = df[col].fillna(df[col].median())
 
-# 6. CATEGORICAL ENCODING & Z-SCORE STANDARDIZATION
+# CATEGORICAL ENCODING & Z-SCORE STANDARDIZATION
 for df in [df_combined, df_riverside, df_sb, df_edison]:
     for col in df.select_dtypes(include=['object', 'string']).columns:
         df[col] = LabelEncoder().fit_transform(df[col].astype(str))
@@ -139,18 +142,15 @@ df_edison_clean = df_edison.copy()
 num_e = df_edison_clean.select_dtypes(include=np.number).columns
 df_edison_clean[num_e] = scaler.fit_transform(df_edison_clean[num_e])
 
-df_combined_clean.to_csv(os.path.join(EXPORT_DIR, "combined_weather_cleaned.csv"), index=False)
-df_riv_clean.to_csv(os.path.join(EXPORT_DIR, "riverside_noaa_cleaned.csv"), index=False)
-df_sb_clean.to_csv(os.path.join(EXPORT_DIR, "san_bernardino_noaa_cleaned.csv"), index=False)
-df_edison_clean.to_csv(os.path.join(EXPORT_DIR, "southernedisoncleaned.csv"), index=False)
+# Export cleaned CSV files to Phase2_CleanData
+df_combined_clean.to_csv(os.path.join(CLEAN_DIR, "combined_weather_cleaned.csv"), index=False)
+df_riv_clean.to_csv(os.path.join(CLEAN_DIR, "riverside_noaa_cleaned.csv"), index=False)
+df_sb_clean.to_csv(os.path.join(CLEAN_DIR, "san_bernardino_noaa_cleaned.csv"), index=False)
+df_edison_clean.to_csv(os.path.join(CLEAN_DIR, "southernedisoncleaned.csv"), index=False)
 
-print("\n✓ Phase 2 Complete! Successfully exported 4 standardized CSV files to Phase2_CleanData:")
-print("  1. combined_weather_cleaned.csv")
-print("  2. riverside_noaa_cleaned.csv")
-print("  3. san_bernardino_noaa_cleaned.csv")
-print("  4. southernedisoncleaned.csv")
+print("\n✓ Phase 2 Complete! Successfully exported cleaned CSV files to Phase2_CleanData.")
 
-# 7. CLEANED SAMPLES & OVERLAID STANDARDIZED SIGNAL PLOTS
+# CLEANED SAMPLES & OVERLAID STANDARDIZED SIGNAL PLOTS
 print("\n--- Cleaned Combined Weather Sample ---")
 print(df_combined_clean.head(3))
 
@@ -183,8 +183,8 @@ plt.grid(True, linestyle='--', alpha=0.5)
 plt.legend(loc='upper left')
 plt.tight_layout()
 
-# Save Plot 7A into Phase2_CleanData
-plt.savefig(os.path.join(EXPORT_DIR, "standardized_signals_2023.png"))
+# Save Plot 7A into Phase2_Graphs
+plt.savefig(os.path.join(GRAPH_DIR, "standardized_signals_2023.png"))
 plt.close()
 
 
@@ -203,8 +203,8 @@ plt.grid(True, linestyle='--', alpha=0.5)
 plt.legend(loc='upper left')
 plt.tight_layout()
 
-# Save Plot 7B into Phase2_CleanData
-plt.savefig(os.path.join(EXPORT_DIR, "decade_timelapse_2014_2024.png"))
+# Save Plot 7B into Phase2_Graphs
+plt.savefig(os.path.join(GRAPH_DIR, "decade_timelapse_2014_2024.png"))
 plt.close()
 
-print("\n✓ All plots have been successfully saved to your Phase2_CleanData folder!")
+print("\nAll graph outputs have been saved to the Phase2_Graphs folder.")
